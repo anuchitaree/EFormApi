@@ -1,0 +1,150 @@
+Option Explicit
+
+Private Sub CommandButton1_Click()
+
+
+Dim myPath As String
+Dim folderPath As String
+Dim Worksheet As String
+
+folderPath = Application.ActiveWorkbook.Path
+myPath = Application.ActiveWorkbook.FullName
+Worksheet = Application.ActiveSheet.Name
+
+Cells(1, 5) = folderPath
+Cells(2, 5) = myPath
+Cells(3, 5) = Worksheet
+'-------------------------------------------
+Dim TextFile As Integer
+Dim iCol As Integer
+Dim myRange As Range
+Dim cVal As Range
+Dim i As Integer
+Dim myFile As String
+'define the range that you want to write
+Set myRange = Range("A1:A13")
+iCol = myRange.Count
+
+'path to the text file (MAKE SURE TO CHANGE IT)
+'myFile = "C:\Users\Administrator\Desktop\textfile.txt"
+myFile = Cells(11, 3) + "\eform.txt"
+
+'define FreeFile to the variable file number
+TextFile = FreeFile
+
+'using append command to add text to the end of the file
+Open myFile For Output As TextFile
+
+'loop to add data to the text file
+'For i = 1 To iCol
+'Print #TextFile, Cells(i, 1),
+'Print #TextFile, Cells(i, 2)
+'Next i
+
+
+    Write #TextFile, myPath, Worksheet
+   ' Print #TextFile, Worksheet
+    
+  Close #TextFile
+    
+    
+'close command to close the text file after adding data
+Close #TextFile
+
+End Sub
+-------------------------------------------------------------------------------
+Private Sub CommandButton2_Click()
+
+Dim hReq As Object
+Dim i As Long
+Dim var As Variant
+Dim ws As Worksheet
+Dim arr As Object
+
+Dim cntxt As Object
+
+Set ws = Sheet1
+
+'create our URL string and pass the user entered information to it
+Dim strUrl As String
+    strUrl = "https://localhost:7076/api/Eform"
+
+Set cntxt = jsonobject("ActivePath", Cells(2, 5).Value, _
+                        "ActiveSheet", Cells(3, 5).Value)
+
+Dim str As String
+str = "{""ActivePath"":""OPEN_SYSTEM_TRADE"",""ActiveSheet"":10}"
+
+
+'Debug.Print JsonConverter.ConvertToJson(cntxt)
+
+Set hReq = CreateObject("MSXML2.XMLHTTP")
+
+    With hReq
+        .Open "POST", strUrl, False
+        .setRequestHeader "Content-Type", "application/json"
+        .Send str
+    End With
+
+
+  
+  
+  
+  
+  MsgBox hReq.Status
+  
+Dim response As String
+    response = hReq.ResponseText
+   
+ Dim JSON As Object
+ 
+Set JSON = JsonConverter.ParseJson(response)
+    Cells(5, 5) = JSON("status")
+    Cells(6, 5) = JSON("detail")
+'  MsgBox JSON("status")
+
+End Sub
+Function jsonobject(ParamArray keyvals()) As Object
+    Dim rv As Object, n As Long
+    Set rv = CreateObject("scripting.dictionary")
+    For n = LBound(keyvals) To UBound(keyvals) Step 2
+        rv.Add keyvals(n), keyvals(n + 1)
+    Next n
+    Set jsonobject = rv
+End Function
+-------------------------------------------------------------------------------
+Private Sub CommandButton3_Click()
+Dim hReq As Object
+Dim i As Long
+Dim var As Variant
+Dim ws As Worksheet
+Dim arr As Object
+
+Set ws = Sheet1
+
+'create our URL string and pass the user entered information to it
+Dim strUrl As String
+    strUrl = "https://localhost:7076/api/Eform?source=" + Cells(2, 5) + "&worksheet=" + Cells(3, 5)
+
+Set hReq = CreateObject("MSXML2.XMLHTTP")
+    With hReq
+        .Open "GET", strUrl, False
+        .Send
+    End With
+  
+Dim response As String
+    response = hReq.ResponseText
+   
+ Dim JSON As Object
+ 
+ MsgBox hReq.Status
+ If hReq.Status = 200 Then
+Set JSON = JsonConverter.ParseJson(response)
+    Cells(5, 5) = JSON("status")
+    Cells(6, 5) = JSON("detail")
+  MsgBox JSON("status")
+  
+ 
+    End If
+End Sub
+
